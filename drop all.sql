@@ -1,0 +1,12 @@
+USE fsdp;
+
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `admins`;
+DROP TABLE IF EXISTS `announcements`;
+DROP TABLE IF EXISTS `bookings`;
+DROP TABLE IF EXISTS `driverbookings`;
+DROP TABLE IF EXISTS `rewards`;
+DROP TABLE IF EXISTS `ridehistories`;
+DROP TABLE IF EXISTS `userloginhistories`;
+DROP TABLE IF EXISTS `users`;
+SET FOREIGN_KEY_CHECKS = 1; 
