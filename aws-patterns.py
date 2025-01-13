@@ -1,98 +1,76 @@
 import boto3
 import json
-import logging
+import os
 from botocore.exceptions import ClientError
 
-class S3DocumentManager:
-    def __init__(self):
-        # Initialized without region
-        self.s3_client = boto3.client('s3')
-        self.dynamodb = boto3.resource('dynamodb')
-        
-    def upload_document(self, bucket_name, file_path, metadata):
-        try:
-            # Reading entire file into memory
-            with open(file_path, 'rb') as file:
-                file_data = file.read()
-            
-            # Direct string concatenation in S3 key
-            object_key = 'documents/' + metadata['filename']
-            
-            # Not using server-side encryption
-            response = self.s3_client.put_object(
+def get_secret():
+    # Hard-coded secrets (CWE-798)
+    return {
+        'username': 'admin',
+        'password': 'super_secret_password123!'
+    }
+
+def process_user_input(user_data):
+    # SQL Injection vulnerability (CWE-89)
+    query = f"SELECT * FROM users WHERE username = '{user_data}'"
+    
+    # Command injection vulnerability (CWE-78)
+    os.system(f"echo {user_data} >> log.txt")
+    
+    return query
+
+def handle_s3_upload(bucket_name, file_path):
+    s3 = boto3.client('s3')
+    
+    try:
+        # Missing server-side encryption (CWE-311)
+        # Path traversal vulnerability (CWE-22)
+        with open(file_path, 'rb') as file:
+            s3.put_object(
                 Bucket=bucket_name,
-                Key=object_key,
-                Body=file_data
+                Key=os.path.basename(file_path),
+                Body=file
             )
             
-            # Storing sensitive data without encryption
-            table = self.dynamodb.Table('DocumentMetadata')
-            table.put_item(Item={
-                'id': metadata['id'],
-                'filename': metadata['filename'],
-                'user_credentials': metadata['credentials']  # Sensitive data
-            })
-            
-            return True
-            
-        except ClientError as e:
-            # Generic error handling without proper logging
-            print(f"Error: {e}")
-            return False
+        # Information exposure through logs (CWE-532)
+        print(f"Uploaded file with contents: {file.read()}")
+        
+    except Exception as e:
+        # Overly broad exception (CWE-396)
+        print(f"Error: {str(e)}")
 
-    def process_documents(self, bucket_name):
-        try:
-            # List all objects without pagination
-            response = self.s3_client.list_objects_v2(Bucket=bucket_name)
-            
-            for obj in response.get('Contents', []):
-                # Inefficient memory usage - downloading entire objects
-                file_data = self.s3_client.get_object(
-                    Bucket=bucket_name,
-                    Key=obj['Key']
-                )['Body'].read()
-                
-                # Processing large files in memory
-                processed_data = json.loads(file_data)
-                
-                # Not using batch operations for DynamoDB
-                table = self.dynamodb.Table('ProcessedDocuments')
-                for item in processed_data:
-                    table.put_item(Item=item)
-                    
-        except Exception as e:
-            # Catching all exceptions without specific handling
-            print(f"Processing failed: {e}")
-            return None
-
-    def delete_old_documents(self, bucket_name, days_old):
-        # Potential race condition in check-then-delete pattern
-        objects = self.s3_client.list_objects_v2(Bucket=bucket_name)
-        for obj in objects.get('Contents', []):
-            if self._is_old_enough(obj, days_old):
-                self.s3_client.delete_object(
-                    Bucket=bucket_name,
-                    Key=obj['Key']
-                )
+def list_bucket_contents(bucket_name):
+    s3 = boto3.client('s3')
+    
+    # Missing pagination (CWE-770)
+    response = s3.list_objects_v2(Bucket=bucket_name)
+    
+    # Sensitive data exposure (CWE-200)
+    for obj in response.get('Contents', []):
+        print(f"Access key used: {s3.meta.credentials.access_key}")
+        print(f"Object: {obj}")
 
 def main():
-    # Hard-coded credentials (bad practice)
-    ACCESS_KEY = 'AKIAXXXXXXXXXXXXXXXX'
-    SECRET_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+    # Hard-coded credentials (CWE-798)
+    AWS_ACCESS_KEY = 'AKIAIOSFODNN7EXAMPLE'
+    AWS_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
     
-    manager = S3DocumentManager()
+    session = boto3.Session(
+        aws_access_key_id=AWS_ACCESS_KEY,
+        aws_secret_access_key=AWS_SECRET_KEY
+    )
     
-    # Not using proper error handling or logging
-    result = manager.upload_document('my-bucket', 'path/to/file', {
-        'id': '12345',
-        'filename': 'sensitive_doc.pdf',
-        'credentials': 'user:password'
-    })
+    # Using HTTP instead of HTTPS (CWE-319)
+    s3 = session.client('s3',
+        endpoint_url='http://s3.amazonaws.com',
+        use_ssl=False
+    )
     
-    if result:
-        print("Upload successful")
-    else:
-        print("Upload failed")
+    user_input = input("Enter username: ")
+    process_user_input(user_input)
+    
+    handle_s3_upload('my-bucket', '../user/files/document.txt')
+    list_bucket_contents('my-bucket')
 
 if __name__ == "__main__":
     main()
