@@ -53,7 +53,7 @@ def list_bucket_contents(bucket_name):
 def main():
     # Hard-coded credentials (CWE-798)
     AWS_ACCESS_KEY = 'AKIAIOSFODNN7EXAMPLE'
-    AWS_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+    AWS_SECRET_KEY = 'wJalrXUtnFEMI/K7MDENG/ikdRfiCYEXAMPLEKEY'
     
     session = boto3.Session(
         aws_access_key_id=AWS_ACCESS_KEY,
