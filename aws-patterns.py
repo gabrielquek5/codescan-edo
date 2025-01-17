@@ -7,7 +7,7 @@ def get_secret():
     # Hard-coded secrets (CWE-798)
     return {
         'username': 'admin',
-        'password': 'super_secret_password321abcqwertyjklpoi!'
+        'password': 'super_secret_password321!'
     }
 
 def process_user_input(user_data):
