@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticketmaster Clone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f4f4f4;
+        }
+        .header {
+            background-color: #c41e3a;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 30px;
+            align-items: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+        }
+        .search-container {
+            background-color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        .search-bar {
+            width: 60%;
+            display: flex;
+        }
+        .search-bar input {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+        }
+        .search-bar button {
+            background-color: #c41e3a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: white;
+        }
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+        }
+        .events-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
+        .event-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .event-card:hover {
+            transform: scale(1.05);
+        }
+        .event-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+        .event-details {
+            padding: 15px;
+        }
+        .event-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .event-info {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .ticket-price {
+            color: #c41e3a;
+            font-weight: bold;
+        }
+        .buy-ticket-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #c41e3a;
+            color: white;
+            border: none;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .cart-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .cart-content {
+            background: white;
+            padding: 30px;
+            border-radius: 5px;
+            width: 500px;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">TICKETMASTER</div>
+        <div class="nav-links">
+            <a href="#" id="sell-tickets">Sell Tickets</a>
+            <a href="#" id="help">Help</a>
+            <a href="#" id="sign-in">Sign In</a>
+            <a href="#" id="cart">🛒 Cart</a>
+        </div>
+    </header>
+
+    <div class="search-container">
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search events, teams, venues, performers">
+            <button id="search-btn">Search</button>
+        </div>
+    </div>
+
+    <div class="filters">
+        <button class="filter-btn" id="near-me">📍 Near Me</button>
+        <button class="filter-btn" id="dates">📅 Dates</button>
+    </div>
+
+    <div id="events-grid" class="events-container"></div>
+
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-content">
+            <h2>Your Cart</h2>
+            <div id="cart-items"></div>
+            <button id="checkout-btn">Checkout</button>
+            <button id="close-cart-btn">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Event data
+        var events = [
+            {
+                id: 1,
+                title: 'Taylor Swift: The Eras Tour',
+                date: 'May 18, 2024',
+                venue: 'MetLife Stadium',
+                location: 'East Rutherford, NJ',
+                price: 79.99,
+                image: 'https://via.placeholder.com/400x250?text=Taylor+Swift+Tour'
+            },
+            {
+                id: 2,
+                title: 'NBA Playoff Finals',
+                date: 'June 6, 2024',
+                venue: 'Chase Center',
+                location: 'San Francisco, CA',
+                price: 129.50,
+                image: 'https://via.placeholder.com/400x250?text=NBA+Playoffs'
+            },
+            {
+                id: 3,
+                title: 'Coldplay World Tour',
+                date: 'July 22, 2024',
+                venue: 'SoFi Stadium',
+                location: 'Inglewood, CA',
+                price: 99.99,
+                image: 'https://via.placeholder.com/400x250?text=Coldplay+Tour'
+            }
+        ];
+
+        // Global variables
+        var cartItems = [];
+
+        // Render events to the page
+        function renderEvents(eventsToRender) {
+            var eventsGrid = document.getElementById('events-grid');
+            eventsGrid.innerHTML = '';
+
+            for (var i = 0; i < eventsToRender.length; i++) {
+                var event = eventsToRender[i];
+                var eventCard = document.createElement('div');
+                eventCard.className = 'event-card';
+                eventCard.innerHTML = 
+                    '<img src="' + event.image + '" alt="' + event.title + '" class="event-image">' +
+                    '<div class="event-details">' +
+                        '<div class="event-title">' + event.title + '</div>' +
+                        '<div class="event-info">' + event.date + ' | ' + event.venue + '</div>' +
+                        '<div class="event-info">' + event.location + '</div>' +
+                        '<div class="ticket-price">From $' + event.price.toFixed(2) + '</div>' +
+                        '<button class="buy-ticket-btn" data-id="' + event.id + '">Find Tickets</button>' +
+                    '</div>';
+                eventsGrid.appendChild(eventCard);
+            }
+
+            var buyButtons = document.getElementsByClassName('buy-ticket-btn');
+            for (var j = 0; j < buyButtons.length; j++) {
+                buyButtons[j].addEventListener('click', addToCart);
+            }
+        }
+
+        // Add item to cart
+        function addToCart(event) {
+            var eventId = parseInt(event.target.getAttribute('data-id'));
+            var selectedEvent = null;
+
+            for (var i = 0; i < events.length; i++) {
+                if (events[i].id === eventId) {
+                    selectedEvent = events[i];
+                    break;
+                }
+            }
+            
+            if (selectedEvent) {
+                cartItems.push(selectedEvent);
+                updateCartModal();
+                openCartModal();
+            }
+        }
+
+        // Update cart modal
+        function updateCartModal() {
+            var cartItemsContainer = document.getElementById('cart-items');
+            cartItemsContainer.innerHTML = '';
+
+            if (cartItems.length === 0) {
+                cartItemsContainer.innerHTML = '<p>Your cart is empty</p>';
+            } else {
+                for (var i = 0; i < cartItems.length; i++) {
+                    var item = cartItems[i];
+                    var cartItemElement = document.createElement('div');
+                    cartItemElement.className = 'cart-item';
+                    cartItemElement.innerHTML = 
+                        '<span>' + item.title + ' - $' + item.price.toFixed(2) + '</span>' +
+                        '<button onclick="removeFromCart(' + item.id + ')">Remove</button>';
+                    cartItemsContainer.appendChild(cartItemElement);
+                }
+            }
+        }
+
+        // Remove item from cart
+        function removeFromCart(eventId) {
+            for (var i = 0; i < cartItems.length; i++) {
+                if (cartItems[i].id === eventId) {
+                    cartItems.splice(i, 1);
+                    break;
+                }
+            }
+            updateCartModal();
+        }
+
+        // Open cart modal
+        function openCartModal() {
+            document.getElementById('cart-modal').style.display = 'flex';
+        }
+
+        // Close cart modal
+        function closeCartModal() {
+            document.getElementById('cart-modal').style.display = 'none';
+        }
+
+        // Search events
+        function searchEvents() {
+            var searchInput = document.getElementById('search-input').value.toLowerCase();
+            var filteredEvents = [];
+
+            for (var i = 0; i < events.length; i++) {
+                var event = events[i];
+                if (
+                    event.title.toLowerCase().indexOf(searchInput) !== -1 ||
+                    event.location.toLowerCase().indexOf(searchInput) !== -1 ||
+                    event.venue.toLowerCase().indexOf(searchInput) !== -1
+                ) {
+                    filteredEvents.push(event);
+                }
+            }
+            renderEvents(filteredEvents);
+        }
+
+        // Event Listeners
+        document.getElementById('search-btn').addEventListener('click', searchEvents);
+        document.getElementById('cart').addEventListener('click', openCartModal);
+        document.getElementById('checkout-btn').addEventListener('click', function() {
+            alert('Checkout functionality to be implemented');
+            closeCartModal();
+        });
+        document.getElementById('close-cart-btn').addEventListener('click', closeCartModal);
+        document.getElementById('near-me').addEventListener('click', function() {
+            alert('Geolocation feature to be implemented');
+        });
+        document.getElementById('dates').addEventListener('click', function() {
+            alert('Date filter to be implemented');
+        });
+
+        // Initial render
+        renderEvents(events);
+    </script>
+</body>
+</html>
