@@ -8,7 +8,7 @@ class DataProcessor:
         # CWE-798 - Hardcoded credentials
         self.aws_access_key = 'AKIAIOSFODNN7EXAMPLE'
         self.aws_secret_key = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-        self.database_password = 'super_secret_db_password123abcaaa!'
+        self.database_password = 'super_secret_db_password123abcaaab!'
         
         self.s3 = boto3.client('s3',
             aws_access_key_id=self.aws_access_key,
